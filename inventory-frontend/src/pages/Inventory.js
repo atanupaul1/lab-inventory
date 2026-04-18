@@ -1,5 +1,5 @@
 import { useState, useContext } from "react";
-import { AppContext } from "../context/AppContext";
+import { AppContext, API_URL } from "../context/AppContext";
 import { FiTrash2, FiPlus, FiBox, FiSearch, FiTag, FiDollarSign, FiMaximize2, FiMapPin, FiCalendar, FiCpu } from "react-icons/fi";
 import { toast } from "react-hot-toast";
 import Skeleton from "../components/Skeleton";
@@ -31,7 +31,7 @@ function Inventory() {
     setAdding(true);
     const loadingToast = toast.loading("Adding asset...");
     try {
-      const response = await fetch("http://localhost:8000/items", {
+      const response = await fetch(`${API_URL}/items`, {
         method: "POST",
         headers: { 
           "Content-Type": "application/json",
@@ -73,7 +73,7 @@ function Inventory() {
     setShowConfirm(false);
     const deletingToast = toast.loading("Removing asset...");
     try {
-      const response = await fetch(`http://localhost:8000/items/${confirmId}`, {
+      const response = await fetch(`${API_URL}/items/${confirmId}`, {
         method: "DELETE",
         headers: { 
           "Authorization": `Bearer ${user.token}`

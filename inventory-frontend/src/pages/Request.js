@@ -1,5 +1,5 @@
 import { useState, useContext } from "react";
-import { AppContext } from "../context/AppContext";
+import { AppContext, API_URL } from "../context/AppContext";
 import { FiSend, FiPackage, FiHash, FiClock, FiCheckCircle, FiXCircle, FiMapPin, FiInfo } from "react-icons/fi";
 import { toast } from "react-hot-toast";
 
@@ -24,7 +24,7 @@ function Request() {
     setLoading(true);
     const loadingToast = toast.loading("Sending request...");
     try {
-      const response = await fetch("http://localhost:8000/requests", {
+      const response = await fetch(`${API_URL}/requests`, {
         method: "POST",
         headers: { 
           "Content-Type": "application/json",

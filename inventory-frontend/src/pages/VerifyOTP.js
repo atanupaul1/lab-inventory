@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
+import { API_URL } from '../context/AppContext';
 import AuthLayout from '../components/AuthLayout';
 
 const VerifyOTP = () => {
@@ -34,7 +35,7 @@ const VerifyOTP = () => {
         }
 
         try {
-            const response = await fetch('http://localhost:8000/verify-otp', {
+            const response = await fetch(`${API_URL}/verify-otp`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ email, otp_code: otpCode }),

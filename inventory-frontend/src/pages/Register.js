@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
+import { API_URL } from "../context/AppContext";
 import AuthLayout from "../components/AuthLayout";
 import { FiUser, FiMail, FiLock, FiShield, FiArrowRight, FiChevronDown } from "react-icons/fi";
 
@@ -29,7 +30,7 @@ function Register() {
     setError("");
 
     try {
-      const response = await fetch("http://localhost:8000/signup", {
+      const response = await fetch(`${API_URL}/signup`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(formData),

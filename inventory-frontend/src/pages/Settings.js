@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useContext } from 'react';
-import { AppContext } from '../context/AppContext';
+import { AppContext, API_URL } from '../context/AppContext';
 import { FiUser, FiTrash2, FiShield, FiUsers, FiSearch, FiMail } from 'react-icons/fi';
 
 function Settings() {
@@ -12,7 +12,7 @@ function Settings() {
     useEffect(() => {
         const fetchUsers = async () => {
             try {
-                const response = await fetch('http://localhost:8000/users', {
+                const response = await fetch(`${API_URL}/users`, {
                     headers: {
                         'Authorization': `Bearer ${user.token}`
                     }
@@ -37,7 +37,7 @@ function Settings() {
         if (!window.confirm('Are you sure you want to delete this user?')) return;
 
         try {
-            const response = await fetch(`http://localhost:8000/users/${userId}`, {
+            const response = await fetch(`${API_URL}/users/${userId}`, {
                 method: 'DELETE',
                 headers: {
                     'Authorization': `Bearer ${user.token}`

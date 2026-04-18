@@ -1,6 +1,7 @@
 import { createContext, useState, useEffect, useCallback } from "react";
 
 export const AppContext = createContext();
+export const API_URL = process.env.REACT_APP_API_URL || "http://localhost:8000";
 
 function AppProvider({ children }) {
   // 🔥 USER (AUTHENTICATION)
@@ -32,10 +33,10 @@ function AppProvider({ children }) {
       
       // Fetch all in parallel
       const [itemsRes, projectsRes, requestsRes, issuesRes] = await Promise.all([
-        fetch('http://localhost:8000/items'),
-        fetch('http://localhost:8000/projects'),
-        fetch(user.role.toLowerCase() === 'admin' ? 'http://localhost:8000/requests' : 'http://localhost:8000/requests/me', { headers }),
-        fetch('http://localhost:8000/issues', { headers })
+        fetch(`${API_URL}/items`),
+        fetch(`${API_URL}/projects`),
+        fetch(user.role.toLowerCase() === 'admin' ? `${API_URL}/requests` : `${API_URL}/requests/me`, { headers }),
+        fetch(`${API_URL}/issues`, { headers })
       ]);
 
       if (itemsRes.ok) setItems(await itemsRes.json());

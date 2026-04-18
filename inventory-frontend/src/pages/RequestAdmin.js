@@ -1,5 +1,5 @@
 import { useContext } from "react";
-import { AppContext } from "../context/AppContext";
+import { AppContext, API_URL } from "../context/AppContext";
 import { FiCheckCircle, FiXCircle, FiPackage, FiAlertTriangle, FiMapPin, FiUser } from "react-icons/fi";
 import { toast } from "react-hot-toast";
 
@@ -9,7 +9,7 @@ function RequestAdmin() {
   const updateStatus = async (id, status) => {
     const actionToast = toast.loading(`${status === "Approved" ? "Approving" : "Rejecting"} request...`);
     try {
-      const response = await fetch(`http://localhost:8000/requests/${id}`, {
+      const response = await fetch(`${API_URL}/requests/${id}`, {
         method: "PATCH",
         headers: { 
           "Content-Type": "application/json",

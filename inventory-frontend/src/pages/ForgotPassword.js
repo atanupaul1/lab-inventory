@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
+import { API_URL } from "../context/AppContext";
 import AuthLayout from "../components/AuthLayout";
 import { FiMail, FiLock, FiCheckCircle, FiArrowRight, FiShield } from "react-icons/fi";
 
@@ -22,7 +23,7 @@ function ForgotPassword() {
     setError("");
     
     try {
-      const response = await fetch("http://localhost:8000/forgot-password", { 
+      const response = await fetch(`${API_URL}/forgot-password`, { 
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ email })
@@ -68,7 +69,7 @@ function ForgotPassword() {
     setError("");
 
     try {
-      const response = await fetch("http://localhost:8000/reset-password", { 
+      const response = await fetch(`${API_URL}/reset-password`, { 
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ email, otp_code: otp, new_password: newPassword })

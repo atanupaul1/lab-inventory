@@ -1,5 +1,5 @@
 import { useContext } from "react";
-import { AppContext } from "../context/AppContext";
+import { AppContext, API_URL } from "../context/AppContext";
 import { FiBarChart2, FiAlertCircle, FiCheckCircle, FiInbox, FiTrendingUp } from "react-icons/fi";
 import { toast } from "react-hot-toast";
 import Skeleton from "../components/Skeleton";
@@ -17,7 +17,7 @@ function Reports() {
   const resolveIssue = async (id) => {
     const loadingToast = toast.loading("Resolving issue...");
     try {
-      const response = await fetch(`http://localhost:8000/issues/${id}?status=Resolved`, {
+      const response = await fetch(`${API_URL}/issues/${id}?status=Resolved`, {
         method: "PATCH",
         headers: { 
           "Authorization": `Bearer ${user.token}`

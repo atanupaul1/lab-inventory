@@ -1,5 +1,5 @@
 import { useState, useContext } from "react";
-import { AppContext } from "../context/AppContext";
+import { AppContext, API_URL } from "../context/AppContext";
 import { FiFolder, FiPlus, FiCalendar, FiEdit, FiTrash2 } from "react-icons/fi";
 import { toast } from "react-hot-toast";
 import Skeleton from "../components/Skeleton";
@@ -24,7 +24,7 @@ function Projects() {
     setSaving(true);
     const loadingToast = toast.loading(editId ? "Updating project..." : "Launching project...");
     try {
-      const response = await fetch("http://localhost:8000/projects", {
+      const response = await fetch(`${API_URL}/projects`, {
         method: "POST",
         headers: { 
           "Content-Type": "application/json",
@@ -62,7 +62,7 @@ function Projects() {
     setShowConfirm(false);
     const deletingToast = toast.loading("Deleting project...");
     try {
-      const response = await fetch(`http://localhost:8000/projects/${confirmId}`, {
+      const response = await fetch(`${API_URL}/projects/${confirmId}`, {
         method: "DELETE",
         headers: { 
           "Authorization": `Bearer ${user.token}`

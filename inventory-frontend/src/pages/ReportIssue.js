@@ -1,5 +1,5 @@
 import { useState, useContext } from "react";
-import { AppContext } from "../context/AppContext";
+import { AppContext, API_URL } from "../context/AppContext";
 import { FiAlertCircle, FiSend, FiMessageSquare, FiList } from "react-icons/fi";
 
 function ReportIssue() {
@@ -13,7 +13,7 @@ function ReportIssue() {
 
     setLoading(true);
     try {
-      const response = await fetch("http://localhost:8000/issues", {
+      const response = await fetch(`${API_URL}/issues`, {
         method: "POST",
         headers: { 
           "Content-Type": "application/json",

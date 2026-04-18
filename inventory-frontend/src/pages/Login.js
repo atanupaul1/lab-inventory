@@ -1,6 +1,6 @@
 import { useState, useContext } from "react";
 import { useNavigate } from "react-router-dom";
-import { AppContext } from "../context/AppContext";
+import { AppContext, API_URL } from "../context/AppContext";
 import AuthLayout from "../components/AuthLayout";
 import { FiMail, FiLock, FiArrowRight } from "react-icons/fi";
 
@@ -21,7 +21,7 @@ function Login() {
     setError("");
 
     try {
-      const response = await fetch("http://localhost:8000/token", {
+      const response = await fetch(`${API_URL}/token`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ email, password }),
