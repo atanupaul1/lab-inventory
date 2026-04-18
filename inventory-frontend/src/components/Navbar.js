@@ -1,68 +1,148 @@
-import { useNavigate } from "react-router-dom";
-import { useContext, useState } from "react";
+import { useNavigate, useLocation } from "react-router-dom";
+import { useContext, useState, useEffect, useRef } from "react";
 import { AppContext } from "../context/AppContext";
-import { FiSearch, FiBell } from "react-icons/fi";
+import { FiSearch, FiBell, FiPlus, FiChevronRight, FiShoppingCart, FiAlertTriangle, FiMenu, FiX } from "react-icons/fi";
+import ThemeToggle from "./ThemeToggle";
 
 function Navbar() {
   const navigate = useNavigate();
-  const { user, requests, issues } = useContext(AppContext);
+  const location = useLocation();
+  const { user, requests, issues, searchTerm, setSearchTerm, mobileOpen, setMobileOpen } = useContext(AppContext);
   const [open, setOpen] = useState(false);
+
+  const handleSearch = (e) => {
+    setSearchTerm(e.target.value);
+    if (location.pathname !== "/inventory" && e.target.value.length > 0) {
+      navigate("/inventory");
+    }
+  };
+  const dropdownRef = useRef(null);
 
   const handleNewOrder = () => {
     if (!user) return navigate("/");
-
     if (user.role === "student") {
       navigate("/request");
     } else {
-      navigate("/manage-requests");
+      navigate("/inventory");
     }
   };
 
   const pendingRequests = requests.filter(r => r.status === "Pending");
   const pendingIssues = issues.filter(i => i.status === "Pending");
+  const totalNotifications = pendingRequests.length + pendingIssues.length;
+
+  const getPageTitle = () => {
+    const path = location.pathname.split("/")[1];
+    return path ? path.charAt(0).toUpperCase() + path.slice(1) : "Overview";
+  };
+
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (dropdownRef.current && !dropdownRef.current.contains(event.target)) {
+        setOpen(false);
+      }
+    };
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, []);
 
   return (
-    <div style={styles.nav}>
-      <div style={styles.searchBox}>
-        <FiSearch color="#999" size={18} />
-        <input style={styles.searchInput} placeholder="Search" />
+    <header className="glass" style={styles.nav}>
+      {/* LEFT: Breadcrumbs */}
+      <div style={styles.left}>
+        <button className="mobile-menu-btn" style={styles.menuBtn} onClick={() => setMobileOpen(!mobileOpen)}>
+          {mobileOpen ? <FiX size={24} /> : <FiMenu size={24} />}
+        </button>
+        <div style={styles.breadcrumb}>
+           <span style={{ color: "var(--color-text-dim)" }}>Pages</span>
+           <FiChevronRight size={14} color="var(--color-text-dim)" />
+           <span style={{ fontWeight: "600" }}>{getPageTitle()}</span>
+        </div>
       </div>
 
+      {/* RIGHT: Search & Actions */}
       <div style={styles.right}>
-
-        {/* 🔔 NOTIFICATION */}
-        <div style={styles.bell} onClick={() => setOpen(!open)}>
-          <div style={styles.bellIcon}><FiBell size={20} /></div>
-          {(pendingRequests.length + pendingIssues.length) > 0 && (
-            <span style={styles.badge}>
-              {pendingRequests.length + pendingIssues.length}
-            </span>
-          )}
-
-          {open && (
-            <div style={styles.dropdown}>
-              {pendingRequests.length === 0 && pendingIssues.length === 0 && (
-                <p>No new notifications</p>
-              )}
-
-              {pendingRequests.map(r => (
-                <p key={r.id}>📦 {r.item}</p>
-              ))}
-
-              {pendingIssues.map(i => (
-                <p key={i.id}>⚠ {i.text}</p>
-              ))}
-            </div>
-          )}
+        <div className="search-box" style={styles.searchBox}>
+          <FiSearch color="var(--color-text-dim)" size={18} />
+          <input 
+            className="search-input" 
+            style={styles.searchInput} 
+            placeholder="Search assets..." 
+            value={searchTerm}
+            onChange={handleSearch}
+          />
         </div>
 
-        {/* NEW ORDER BUTTON */}
-        <button style={styles.btn} onClick={handleNewOrder}>
-          + New Order
-        </button>
+        <div style={styles.actions}>
+           <ThemeToggle />
+           <div style={{ position: "relative" }} ref={dropdownRef}>
+              <button style={styles.actionBtn} onClick={() => setOpen(!open)}>
+                <FiBell size={20} />
+                {totalNotifications > 0 && (
+                  <span style={styles.badge}>{totalNotifications}</span>
+                )}
+              </button>
 
+              {open && (
+                <div className="card" style={styles.dropdown}>
+                  <div style={styles.dropdownHeader}>
+                    <h4 style={{ margin: 0 }}>Notifications</h4>
+                    <span style={{ fontSize: "11px", color: "var(--color-accent)" }}>Clear all</span>
+                  </div>
+                  <div style={styles.dropdownBody}>
+                    {totalNotifications === 0 ? (
+                      <p style={styles.emptyText}>No new notifications</p>
+                    ) : (
+                      <>
+                        {pendingRequests.map(r => (
+                          <div key={r.id} style={styles.notiItem}>
+                            <div style={styles.notiIcon}><FiShoppingCart size={14} /></div>
+                            <div>
+                               <p style={styles.notiTitle}>New Request: {r.item?.name || "Hardware"}</p>
+                               <span style={styles.notiTime}>Just now</span>
+                            </div>
+                          </div>
+                        ))}
+                        {pendingIssues.map(i => (
+                          <div key={i.id} style={styles.notiItem}>
+                            <div style={{...styles.notiIcon, background: "var(--color-danger-soft)", color: "var(--color-danger)"}}>
+                               <FiAlertTriangle size={14} />
+                            </div>
+                            <div>
+                               <p style={styles.notiTitle}>Issue: {i.text}</p>
+                               <span style={styles.notiTime}>Recently</span>
+                            </div>
+                          </div>
+                        ))}
+                      </>
+                    )}
+                  </div>
+                </div>
+              )}
+           </div>
+
+           <button className="btn-primary" onClick={handleNewOrder}>
+             <FiPlus size={18} />
+             <span>{user?.role === "admin" ? "Add Item" : "Issue Hardware"}</span>
+           </button>
+        </div>
       </div>
-    </div>
+
+      <style>{`
+        .search-box:focus-within {
+          border-color: var(--color-accent) !important;
+          box-shadow: 0 0 0 2px var(--color-accent-soft);
+        }
+        @media (max-width: 768px) {
+          .menu-btn-container { display: block; }
+          .search-box { display: none !important; }
+          .btn-primary span { display: none; }
+          .btn-primary { padding: 10px; border-radius: 50%; width: 44px; height: 44px; justify-content: center; }
+          .navbar-actions { gap: 10px !important; }
+          .mobile-menu-btn { display: flex !important; }
+        }
+      `}</style>
+    </header>
   );
 }
 
@@ -70,85 +150,139 @@ const styles = {
   nav: {
     display: "flex",
     justifyContent: "space-between",
-    padding: "8px 30px",
     alignItems: "center",
-    background: "transparent",
+    height: "var(--navbar-height)",
+    padding: "0 30px",
+    background: "var(--color-bg-primary)",
+    opacity: 0.9,
+    borderBottom: "1px solid var(--border-color)",
+    position: "sticky",
+    top: 0,
+    zIndex: 99,
   },
-  searchBox: {
+  left: {
     display: "flex",
     alignItems: "center",
-    background: "white",
-    padding: "10px 15px",
-    borderRadius: "20px",
-    width: "350px",
-    gap: "10px",
-    boxShadow: "0 2px 10px rgba(0,0,0,0.02)",
   },
-  searchInput: {
-    border: "none",
-    background: "transparent",
-    outline: "none",
-    width: "100%",
+  breadcrumb: {
+    display: "flex",
+    alignItems: "center",
+    gap: "8px",
     fontSize: "14px",
-    color: "#333",
   },
   right: {
     display: "flex",
     alignItems: "center",
-    gap: "20px",
+    gap: "24px",
   },
-  bell: {
-    position: "relative",
-    cursor: "pointer",
+  searchBox: {
+    display: "flex",
+    alignItems: "center",
+    background: "var(--color-bg-secondary)",
+    padding: "8px 16px",
+    borderRadius: "var(--border-radius-full)",
+    width: "280px",
+    gap: "10px",
+    border: "1px solid var(--border-color)",
+    transition: "all var(--transition-fast)",
   },
-  bellIcon: {
-    background: "white",
-    padding: "10px",
-    borderRadius: "50%",
+  searchInput: {
+    border: "none",
+    background: "transparent",
+    color: "var(--color-text-primary)",
+    fontSize: "14px",
+    width: "100%",
+  },
+  actions: {
+    display: "flex",
+    alignItems: "center",
+    gap: "16px",
+  },
+  actionBtn: {
     display: "flex",
     alignItems: "center",
     justifyContent: "center",
-    color: "#555",
-    boxShadow: "0 2px 10px rgba(0,0,0,0.02)",
+    width: "40px",
+    height: "40px",
+    borderRadius: "10px",
+    background: "var(--color-bg-secondary)",
+    border: "1px solid var(--border-color)",
+    color: "var(--color-text-secondary)",
+    position: "relative",
   },
   badge: {
     position: "absolute",
-    top: "-2px",
-    right: "-2px",
-    background: "#ef4444",
+    top: "-4px",
+    right: "-4px",
+    background: "var(--color-danger)",
     color: "white",
-    borderRadius: "50%",
+    fontSize: "10px",
+    fontWeight: "700",
     width: "18px",
     height: "18px",
+    borderRadius: "50%",
     display: "flex",
     alignItems: "center",
     justifyContent: "center",
-    fontSize: "11px",
-    fontWeight: "bold",
-    border: "2px solid white",
+    border: "2px solid var(--color-bg-primary)",
   },
   dropdown: {
     position: "absolute",
-    top: "45px",
+    top: "50px",
     right: "0",
-    background: "white",
-    padding: "10px",
-    borderRadius: "12px",
-    boxShadow: "0 4px 20px rgba(0,0,0,0.1)",
-    minWidth: "220px",
-    zIndex: 10,
+    width: "300px",
+    padding: "16px",
+    zIndex: 100,
   },
-  btn: {
-    background: "#674F2D",
-    color: "white",
-    border: "none",
-    padding: "12px 20px",
-    borderRadius: "20px",
-    cursor: "pointer",
-    fontWeight: "bold",
-    fontSize: "14px",
-    boxShadow: "0 4px 10px rgba(103, 79, 45, 0.2)",
+  dropdownHeader: {
+    display: "flex",
+    justifyContent: "space-between",
+    alignItems: "center",
+    marginBottom: "16px",
+    paddingBottom: "12px",
+    borderBottom: "1px solid var(--border-color)",
+  },
+  dropdownBody: {
+    display: "flex",
+    flexDirection: "column",
+    gap: "12px",
+  },
+  emptyText: {
+    textAlign: "center",
+    color: "var(--color-text-dim)",
+    fontSize: "13px",
+    margin: "12px 0",
+  },
+  notiItem: {
+    display: "flex",
+    gap: "12px",
+    alignItems: "flex-start",
+  },
+  notiIcon: {
+    width: "28px",
+    height: "28px",
+    borderRadius: "8px",
+    background: "var(--color-accent-soft)",
+    color: "var(--color-accent)",
+    display: "flex",
+    alignItems: "center",
+    justifyContent: "center",
+    flexShrink: 0,
+  },
+  notiTitle: {
+    margin: 0,
+    fontSize: "13px",
+    fontWeight: "500",
+  },
+  notiTime: {
+    fontSize: "11px",
+    color: "var(--color-text-dim)",
+  },
+  menuBtn: {
+    display: "none",
+    marginRight: "16px",
+    color: "var(--color-text-primary)",
   },
 };
 
-export default Navbar;
+export default Navbar;

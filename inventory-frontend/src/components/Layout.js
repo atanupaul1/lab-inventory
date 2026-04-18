@@ -3,22 +3,38 @@ import Navbar from "./Navbar";
 
 function Layout({ children }) {
   return (
-    <div style={{ display: "flex" }}>
+    <div className="layout-root" style={{ display: "flex", minHeight: "100vh" }}>
       <Sidebar />
 
-      <div style={{
+      <div className="main-content" style={{
         flex: 1,
-        background: "transparent",
-        minHeight: "100vh",
         display: "flex",
-        flexDirection: "column"
+        flexDirection: "column",
+        overflowX: "hidden"
       }}>
         <Navbar />
 
-        <div style={{ padding: "20px" }}>
+        <main className="page-container" style={{ 
+          padding: "24px", 
+          flex: 1,
+          animation: "fadeIn 0.4s ease-out"
+        }}>
           {children}
-        </div>
+        </main>
       </div>
+      
+      <style>{`
+        @keyframes fadeIn {
+          from { opacity: 0; transform: translateY(10px); }
+          to { opacity: 1; transform: translateY(0); }
+        }
+        
+        @media (max-width: 768px) {
+          .layout-root {
+            flex-direction: column;
+          }
+        }
+      `}</style>
     </div>
   );
 }

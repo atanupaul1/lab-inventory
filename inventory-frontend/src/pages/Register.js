@@ -1,150 +1,190 @@
-import { useState, useEffect } from "react";
-import { Link } from "react-router-dom";
+import { useState } from "react";
+import { useNavigate } from "react-router-dom";
+import AuthLayout from "../components/AuthLayout";
+import { FiUser, FiMail, FiLock, FiShield, FiArrowRight, FiChevronDown } from "react-icons/fi";
 
 function Register() {
-  const [name, setName] = useState("");
-  const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
+  const navigate = useNavigate();
 
-  // ✅ Reset when page loads
-  useEffect(() => {
-    setName("");
-    setEmail("");
-    setPassword("");
-    window.scrollTo(0, 0);
-  }, []);
+  const [formData, setFormData] = useState({
+    full_name: "",
+    email: "",
+    password: "",
+    role: "student",
+  });
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState("");
+
+  const handleChange = (e) => {
+    setFormData({ ...formData, [e.target.name]: e.target.value });
+  };
+
+  const handleRegister = async (e) => {
+    e.preventDefault();
+    if (!formData.full_name || !formData.email || !formData.password) {
+      return setError("Please fill in all fields");
+    }
+
+    setLoading(true);
+    setError("");
+
+    try {
+      const response = await fetch("http://localhost:8000/signup", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(formData),
+      });
+
+      const data = await response.json();
+
+      if (response.ok) {
+        navigate("/");
+      } else {
+        const msg = typeof data.detail === "string" 
+          ? data.detail 
+          : (Array.isArray(data.detail) ? data.detail[0].msg : "Registration failed");
+        setError(msg);
+      }
+    } catch (err) {
+      setError("Server connection failed");
+    } finally {
+      setLoading(false);
+    }
+  };
 
   return (
-    <div style={styles.container}>
-      
-      {/* LEFT IMAGE */}
-      <div style={styles.left}></div>
-
-      {/* RIGHT FORM */}
-      <div style={styles.right}>
-        <div style={styles.box}>
-          <h2 style={styles.title}>Register Account</h2>
-
-          <div style={styles.inputGroup}>
-            <label style={styles.label}>Name</label>
+    <AuthLayout 
+      title="Create Account" 
+      subtitle="Join LabFlow to manage your lab resources"
+      alternativeLink="/"
+      alternativeText="Already have an account?"
+      image="/Welcome.png"
+    >
+      <form onSubmit={handleRegister} style={{ display: "flex", flexDirection: "column", gap: "16px" }}>
+        <div style={styles.inputGroup}>
+          <label style={styles.label}>Full Name</label>
+          <div style={styles.inputWrapper}>
+            <FiUser style={styles.inputIcon} />
             <input
+              name="full_name"
               type="text"
-              placeholder="Your Name"
-              value={name}
-              onChange={(e) => setName(e.target.value)}
-              style={styles.input}
+              placeholder="John Doe"
+              className="input-field"
+              value={formData.full_name}
+              onChange={handleChange}
+              style={{ paddingLeft: "44px" }}
             />
           </div>
-
-          <div style={styles.inputGroup}>
-            <label style={styles.label}>Email</label>
-            <input
-              type="email"
-              placeholder="Your Email"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              style={styles.input}
-            />
-          </div>
-
-          <div style={styles.inputGroup}>
-            <label style={styles.label}>Password</label>
-            <input
-              type="password"
-              placeholder="Create Password"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              style={styles.input}
-            />
-          </div>
-
-          <button style={styles.btn}>Sign Up</button>
-
-          <p style={styles.linkText}>
-            Already have an account? <Link to="/" style={styles.link}>Login</Link>
-          </p>
         </div>
-      </div>
-    </div>
+
+        <div style={styles.inputGroup}>
+          <label style={styles.label}>Email Address</label>
+          <div style={styles.inputWrapper}>
+            <FiMail style={styles.inputIcon} />
+            <input
+              name="email"
+              type="email"
+              placeholder="name@example.com"
+              className="input-field"
+              value={formData.email}
+              onChange={handleChange}
+              style={{ paddingLeft: "44px" }}
+            />
+          </div>
+        </div>
+
+        <div style={styles.inputGroup}>
+          <label style={styles.label}>Password</label>
+          <div style={styles.inputWrapper}>
+            <FiLock style={styles.inputIcon} />
+            <input
+              name="password"
+              type="password"
+              placeholder="••••••••"
+              className="input-field"
+              value={formData.password}
+              onChange={handleChange}
+              style={{ paddingLeft: "44px" }}
+            />
+          </div>
+        </div>
+
+        <div style={styles.inputGroup}>
+          <label style={styles.label}>Joining As</label>
+          <div style={styles.inputWrapper}>
+            <FiShield style={styles.inputIcon} />
+            <select
+              name="role"
+              className="input-field"
+              value={formData.role}
+              onChange={handleChange}
+              style={{ paddingLeft: "44px", appearance: "none", cursor: "pointer" }}
+            >
+              <option value="student">Student</option>
+              <option value="admin">Administrator</option>
+            </select>
+            <FiChevronDown style={styles.dropdownArrow} />
+          </div>
+        </div>
+
+        {error && <div style={styles.error}>{error}</div>}
+
+        <button 
+          type="submit" 
+          className="btn-primary" 
+          disabled={loading}
+          style={{ width: "100%", height: "48px", marginTop: "12px" }}
+        >
+          {loading ? "Creating account..." : (
+            <>
+              <span>Create Account</span>
+              <FiArrowRight />
+            </>
+          )}
+        </button>
+      </form>
+    </AuthLayout>
   );
 }
 
 const styles = {
-  container: {
-    display: "flex",
-    height: "100vh",
-  },
-  left: {
-    flex: 1.2,
-    backgroundColor: "#F5F5DC",
-    backgroundImage: "url('/Welcome.png')",
-    backgroundSize: "70%",
-    backgroundRepeat: "no-repeat",
-    backgroundPosition: "center",
-    backgroundBlendMode: "multiply",
-  },
-  right: {
-    flex: 1,
-    display: "flex",
-    justifyContent: "center",
-    alignItems: "center",
-    background: "#F5F5DC",
-  },
-  box: {
-    width: "360px",
-    padding: "40px",
-    background: "white",
-    borderRadius: "16px",
-    boxShadow: "0 10px 40px rgba(0,0,0,0.08)",
-  },
-  title: {
-    textAlign: "center",
-    fontSize: "28px",
-    color: "#222",
-    fontWeight: "normal",
-    marginBottom: "30px",
-    marginTop: 0
-  },
   inputGroup: {
     display: "flex",
     flexDirection: "column",
-    marginBottom: "20px"
+    gap: "8px",
   },
   label: {
-    fontSize: "13px",
-    color: "#333",
-    fontWeight: "600",
-    marginBottom: "8px"
-  },
-  input: {
-    width: "100%",
-    padding: "12px 15px",
-    borderRadius: "6px",
-    border: "1px solid #D2B48C",
-    boxSizing: "border-box",
-    fontSize: "14px"
-  },
-  btn: {
-    width: "100%",
-    padding: "14px",
-    background: "#674F2D",
-    color: "white",
-    border: "none",
-    borderRadius: "30px",
-    cursor: "pointer",
     fontSize: "14px",
-    marginTop: "10px",
-    marginBottom: "20px"
+    fontWeight: "600",
+    color: "var(--color-text-secondary)",
   },
-  linkText: {
-    textAlign: "center",
+  inputWrapper: {
+    position: "relative",
+    display: "flex",
+    alignItems: "center",
+  },
+  inputIcon: {
+    position: "absolute",
+    left: "16px",
+    color: "var(--color-text-dim)",
+    fontSize: "18px",
+  },
+  error: {
+    padding: "12px",
+    background: "var(--color-danger-soft)",
+    color: "var(--color-danger)",
+    borderRadius: "12px",
     fontSize: "13px",
-    color: "#333",
-    margin: "10px 0"
+    textAlign: "center",
+    fontWeight: "500",
+    border: "1px solid rgba(239, 68, 68, 0.2)",
   },
-  link: {
-    color: "#9D825D",
-    textDecoration: "none"
+  dropdownArrow: {
+    position: "absolute",
+    right: "16px",
+    color: "var(--color-text-dim)",
+    pointerEvents: "none",
+    fontSize: "18px",
   }
 };
 

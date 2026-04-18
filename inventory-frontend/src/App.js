@@ -6,6 +6,7 @@ import Login from "./pages/Login";
 import Register from "./pages/Register";
 import ForgotPassword from "./pages/ForgotPassword";
 
+import { Toaster } from 'react-hot-toast';
 import Dashboard from "./pages/Dashboard";
 import Inventory from "./pages/Inventory";
 import Projects from "./pages/Projects";
@@ -46,9 +47,7 @@ function App() {
         <Route
           path="/inventory"
           element={
-            user?.role === "admin"
-              ? <Layout><Inventory /></Layout>
-              : <Login />
+            user ? <Layout><Inventory /></Layout> : <Login />
           }
         />
 
@@ -64,7 +63,7 @@ function App() {
         <Route
           path="/request"
           element={
-            user?.role === "student"
+            (user?.role?.toLowerCase() === "student" || user?.role?.toLowerCase() === "user")
               ? <Layout><Request /></Layout>
               : <Login />
           }
@@ -74,7 +73,7 @@ function App() {
         <Route
           path="/manage-requests"
           element={
-            user?.role === "admin"
+            user?.role?.toLowerCase() === "admin"
               ? <Layout><RequestAdmin /></Layout>
               : <Login />
           }
@@ -85,7 +84,7 @@ function App() {
         <Route
           path="/history"
           element={
-            user?.role === "student"
+            (user?.role?.toLowerCase() === "student" || user?.role?.toLowerCase() === "user")
               ? <Layout><History /></Layout>
               : <Login />
           }
@@ -94,7 +93,7 @@ function App() {
         <Route
           path="/report-issue"
           element={
-            user?.role === "student"
+            (user?.role?.toLowerCase() === "student" || user?.role?.toLowerCase() === "user")
               ? <Layout><ReportIssue /></Layout>
               : <Login />
           }
@@ -114,7 +113,7 @@ function App() {
         <Route
           path="/reports"
           element={
-            user?.role === "admin"
+            user?.role?.toLowerCase() === "admin"
               ? <Layout><Reports /></Layout>
               : <Login />
           }
@@ -123,13 +122,24 @@ function App() {
         <Route
           path="/settings"
           element={
-            user?.role === "admin"
+            user?.role?.toLowerCase() === "admin"
               ? <Layout><Settings /></Layout>
               : <Login />
           }
         />
        
       </Routes>
+      <Toaster 
+        position="top-right"
+        toastOptions={{
+          duration: 4000,
+          style: {
+            background: '#1e293b',
+            color: '#f1f5f9',
+            border: '1px solid rgba(255,255,255,0.1)',
+          },
+        }}
+      />
     </Router>
   );
 }

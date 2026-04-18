@@ -1,81 +1,82 @@
-import { createContext, useState, useEffect } from "react";
+import { createContext, useState, useEffect, useCallback } from "react";
 
 export const AppContext = createContext();
 
 function AppProvider({ children }) {
-
-  // 🔥 USER (LOGIN)
+  // 🔥 USER (AUTHENTICATION)
   const [user, setUser] = useState(() => {
     const saved = localStorage.getItem("user");
     return saved ? JSON.parse(saved) : null;
   });
 
-  // 🔥 ITEMS
-  const [items, setItems] = useState(() => {
-    const saved = localStorage.getItem("items");
-    return saved ? JSON.parse(saved) : [
-      { id: 1, name: "Microscope", quantity: 5 },
-      { id: 2, name: "Test Tubes", quantity: 20 },
-    ];
-  });
-
-  // 🔥 PROJECTS
-  const [projects, setProjects] = useState(() => {
-    const saved = localStorage.getItem("projects");
-    return saved ? JSON.parse(saved) : [
-      {
-        id: 1,
-        name: "Robotics Arm",
-        startDate: "2026-03-01",
-        endDate: "2026-03-20",
-      },
-    ];
-  });
-
-  // 🔥 REQUESTS
-  const [requests, setRequests] = useState(() => {
-    const saved = localStorage.getItem("requests");
-    return saved ? JSON.parse(saved) : [];
-  });
-  // issue 
-  const [issues, setIssues] = useState(() => {
-    const saved = localStorage.getItem("issues");
-    return saved ? JSON.parse(saved) : [];
-  });
-  // DARK MODE 
-    const [darkMode, setDarkMode] = useState(() => {
+  const [items, setItems] = useState([]);
+  const [projects, setProjects] = useState([]);
+  const [requests, setRequests] = useState([]);
+  const [issues, setIssues] = useState([]);
+  const [searchTerm, setSearchTerm] = useState("");
+  const [darkMode, setDarkMode] = useState(() => {
     const saved = localStorage.getItem("darkMode");
-  return saved ? JSON.parse(saved) : false;
+    return saved ? JSON.parse(saved) : false;
   });
+  const [mobileOpen, setMobileOpen] = useState(false);
 
-  // 💾 SAVE USER
+  const [loading, setLoading] = useState(false);
+
+  // 📡 FETCH DATA FROM API
+  const fetchData = useCallback(async () => {
+    if (!user || !user.token) return;
+    
+    setLoading(true);
+    try {
+      const headers = { 'Authorization': `Bearer ${user.token}` };
+      
+      // Fetch all in parallel
+      const [itemsRes, projectsRes, requestsRes, issuesRes] = await Promise.all([
+        fetch('http://localhost:8000/items'),
+        fetch('http://localhost:8000/projects'),
+        fetch(user.role.toLowerCase() === 'admin' ? 'http://localhost:8000/requests' : 'http://localhost:8000/requests/me', { headers }),
+        fetch('http://localhost:8000/issues', { headers })
+      ]);
+
+      if (itemsRes.ok) setItems(await itemsRes.json());
+      if (projectsRes.ok) setProjects(await projectsRes.json());
+      if (requestsRes.ok) setRequests(await requestsRes.json());
+      if (issuesRes.ok) setIssues(await issuesRes.json());
+
+    } catch (err) {
+      console.error("Failed to fetch data:", err);
+    } finally {
+      setLoading(false);
+    }
+  }, [user]);
+
+  // Initial fetch on mount or user change
+  useEffect(() => {
+    if (user) {
+      fetchData();
+    } else {
+      // Clear data on logout
+      setItems([]);
+      setProjects([]);
+      setRequests([]);
+      setIssues([]);
+    }
+  }, [user, fetchData]);
+
+  // 💾 PERSIST AUTH & THEME
   useEffect(() => {
     localStorage.setItem("user", JSON.stringify(user));
   }, [user]);
 
-  // 💾 SAVE ITEMS
   useEffect(() => {
-    localStorage.setItem("items", JSON.stringify(items));
-  }, [items]);
-
-  // 💾 SAVE PROJECTS
-  useEffect(() => {
-    localStorage.setItem("projects", JSON.stringify(projects));
-  }, [projects]);
-
-  // 💾 SAVE REQUESTS
-  useEffect(() => {
-    localStorage.setItem("requests", JSON.stringify(requests));
-  }, [requests]);
-  
-  // save issue 
-  useEffect(() => {
-  localStorage.setItem("issues", JSON.stringify(issues));
-  }, [issues]);
-
-  // save dark mode
-  useEffect(() => {
-  localStorage.setItem("darkMode", JSON.stringify(darkMode));
+    localStorage.setItem("darkMode", JSON.stringify(darkMode));
+    if (darkMode) {
+      document.body.classList.add('dark-mode');
+      document.documentElement.setAttribute('data-theme', 'dark');
+    } else {
+      document.body.classList.remove('dark-mode');
+      document.documentElement.setAttribute('data-theme', 'light');
+    }
   }, [darkMode]);
 
   return (
@@ -83,21 +84,22 @@ function AppProvider({ children }) {
       value={{
         user,
         setUser,
-
         items,
         setItems,
-
         projects,
         setProjects,
-
         requests,
         setRequests,
-
         issues,
         setIssues,
-
+        searchTerm,
+        setSearchTerm,
         darkMode,
         setDarkMode,
+        mobileOpen,
+        setMobileOpen,
+        refreshData: fetchData,
+        loading
       }}
     >
       {children}

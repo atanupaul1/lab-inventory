@@ -1,215 +1,161 @@
 import { useState, useContext } from "react";
-import { Link, useNavigate } from "react-router-dom";
+import { useNavigate } from "react-router-dom";
 import { AppContext } from "../context/AppContext";
+import AuthLayout from "../components/AuthLayout";
+import { FiMail, FiLock, FiArrowRight } from "react-icons/fi";
 
 function Login() {
-  const [role, setRole] = useState("student");
+  const navigate = useNavigate();
+  const { setUser } = useContext(AppContext);
+
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState("");
 
-  const { setUser } = useContext(AppContext);
-  const navigate = useNavigate();
+  const handleLogin = async (e) => {
+    e.preventDefault();
+    if (!email || !password) return setError("Please fill in all fields");
+    
+    setLoading(true);
+    setError("");
 
-  const handleLogin = () => {
-    if (!email || !password) {
-      alert("Please enter email and password");
-      return;
-    }
+    try {
+      const response = await fetch("http://localhost:8000/token", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email, password }),
+      });
 
-    // 🔥 CREATE USER OBJECT
-    const newUser = {
-      email,
-      role, // student or admin
-    };
+      const data = await response.json();
 
-    setUser(newUser);
-
-    // 🔥 REDIRECT BASED ON ROLE
-    if (role === "admin") {
-      navigate("/dashboard");
-    } else {
-      navigate("/request");
+      if (response.ok) {
+        const userObj = { email: email, role: data.role, token: data.access_token };
+        setUser(userObj);
+        localStorage.setItem("user", JSON.stringify(userObj));
+        localStorage.setItem("token", data.access_token);
+        navigate("/dashboard");
+      } else {
+        const msg = typeof data.detail === "string" 
+          ? data.detail 
+          : (Array.isArray(data.detail) ? data.detail[0].msg : "Invalid credentials");
+        setError(msg);
+      }
+    } catch (err) {
+      setError("Server connection failed");
+    } finally {
+      setLoading(false);
     }
   };
 
   return (
-    <div style={styles.container}>
-      
-      {/* LEFT IMAGE */}
-      <div style={styles.left}></div>
-
-      {/* RIGHT FORM */}
-      <div style={styles.right}>
-        <div style={styles.box}>
-          <h2 style={styles.title}>LabFlow Login</h2>
-
-          {/* PORTAL SWITCH */}
-          <div style={styles.switchWrapper}>
-            <div style={styles.switch}>
-              <button
-                onClick={() => setRole("student")}
-                style={role === "student" ? styles.activeBtn : styles.roleBtn}
-              >
-                Student
-              </button>
-
-              <button
-                onClick={() => setRole("admin")}
-                style={role === "admin" ? styles.activeBtn : styles.roleBtn}
-              >
-                Admin
-              </button>
-            </div>
-          </div>
-
-          <div style={styles.inputGroup}>
-            <label style={styles.label}>Email</label>
+    <AuthLayout 
+      title="Welcome Back" 
+      subtitle="Enter your credentials to access LabFlow"
+      alternativeLink="/register"
+      alternativeText="New to LabFlow?"
+      image="/Secure-login.png"
+    >
+      <form onSubmit={handleLogin} style={{ display: "flex", flexDirection: "column", gap: "20px" }}>
+        <div style={styles.inputGroup}>
+          <label style={styles.label}>Email Address</label>
+          <div style={styles.inputWrapper}>
+            <FiMail style={styles.inputIcon} />
             <input
               type="email"
-              placeholder="Email"
+              placeholder="name@example.com"
+              className="input-field"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
-              style={styles.input}
+              style={{ paddingLeft: "44px" }}
             />
           </div>
+        </div>
 
-          <div style={styles.inputGroup}>
+        <div style={styles.inputGroup}>
+          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
             <label style={styles.label}>Password</label>
+            <button 
+              type="button" 
+              onClick={() => navigate("/forgot")}
+              style={styles.forgotBtn}
+            >
+              Forgot?
+            </button>
+          </div>
+          <div style={styles.inputWrapper}>
+            <FiLock style={styles.inputIcon} />
             <input
               type="password"
-              placeholder="Password"
+              placeholder="••••••••"
+              className="input-field"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
-              style={styles.input}
+              style={{ paddingLeft: "44px" }}
             />
           </div>
-
-          <button style={styles.btn} onClick={handleLogin}>
-            Login
-          </button>
-
-          <p style={styles.linkText}>
-            <Link to="/forgot" style={styles.link}>Forgot Password?</Link>
-          </p>
-
-          <p style={styles.linkText}>
-            New user? <Link to="/register" style={styles.link}>Register</Link>
-          </p>
-
         </div>
-      </div>
-    </div>
+
+        {error && <div style={styles.error}>{error}</div>}
+
+        <button 
+          type="submit" 
+          className="btn-primary" 
+          disabled={loading}
+          style={{ width: "100%", height: "48px", marginTop: "12px" }}
+        >
+          {loading ? "Signing in..." : (
+            <>
+              <span>Sign In</span>
+              <FiArrowRight />
+            </>
+          )}
+        </button>
+      </form>
+    </AuthLayout>
   );
 }
 
 const styles = {
-  container: {
-    display: "flex",
-    height: "100vh",
-  },
-  left: {
-    flex: 1.2,
-    backgroundColor: "#F5F5DC",
-    backgroundImage: "url('/Secure-login.png')",
-    backgroundSize: "70%",
-    backgroundRepeat: "no-repeat",
-    backgroundPosition: "center",
-    backgroundBlendMode: "multiply",
-  },
-  right: {
-    flex: 1,
-    display: "flex",
-    justifyContent: "center",
-    alignItems: "center",
-    background: "#F5F5DC",
-  },
-  box: {
-    width: "360px",
-    padding: "40px",
-    background: "white",
-    borderRadius: "16px",
-    boxShadow: "0 10px 40px rgba(0,0,0,0.08)",
-  },
-  title: {
-    textAlign: "center",
-    fontSize: "28px",
-    color: "#222",
-    fontWeight: "normal",
-    marginBottom: "25px",
-    marginTop: 0
-  },
-  switchWrapper: {
-    display: "flex",
-    justifyContent: "center",
-    marginBottom: "30px",
-  },
-  switch: {
-    display: "flex",
-    border: "1px solid #D2B48C",
-    borderRadius: "20px",
-    padding: "2px",
-    width: "200px"
-  },
-  roleBtn: {
-    flex: 1,
-    padding: "8px 15px",
-    border: "none",
-    background: "transparent",
-    color: "#9D825D",
-    cursor: "pointer",
-    borderRadius: "18px",
-    fontSize: "13px"
-  },
-  activeBtn: {
-    flex: 1,
-    padding: "8px 15px",
-    border: "none",
-    background: "#9D825D",
-    color: "white",
-    cursor: "pointer",
-    borderRadius: "18px",
-    fontSize: "13px"
-  },
   inputGroup: {
     display: "flex",
     flexDirection: "column",
-    marginBottom: "20px"
+    gap: "8px",
   },
   label: {
-    fontSize: "13px",
-    color: "#333",
-    fontWeight: "600",
-    marginBottom: "8px"
-  },
-  input: {
-    width: "100%",
-    padding: "12px 15px",
-    borderRadius: "6px",
-    border: "1px solid #D2B48C",
-    boxSizing: "border-box",
-    fontSize: "14px"
-  },
-  btn: {
-    width: "100%",
-    padding: "14px",
-    background: "#674F2D",
-    color: "white",
-    border: "none",
-    borderRadius: "30px",
-    cursor: "pointer",
     fontSize: "14px",
-    marginTop: "10px",
-    marginBottom: "20px"
+    fontWeight: "600",
+    color: "var(--color-text-secondary)",
   },
-  linkText: {
-    textAlign: "center",
+  inputWrapper: {
+    position: "relative",
+    display: "flex",
+    alignItems: "center",
+  },
+  inputIcon: {
+    position: "absolute",
+    left: "16px",
+    color: "var(--color-text-dim)",
+    fontSize: "18px",
+  },
+  error: {
+    padding: "12px",
+    background: "var(--color-danger-soft)",
+    color: "var(--color-danger)",
+    borderRadius: "12px",
     fontSize: "13px",
-    color: "#333",
-    margin: "10px 0"
+    textAlign: "center",
+    fontWeight: "500",
+    border: "1px solid rgba(239, 68, 68, 0.2)",
   },
-  link: {
-    color: "#9D825D",
-    textDecoration: "none"
+  forgotBtn: {
+    fontSize: "12px",
+    fontWeight: "600",
+    color: "var(--color-accent)",
+    background: "none",
+    border: "none",
+    padding: 0,
+    cursor: "pointer",
   }
 };
 

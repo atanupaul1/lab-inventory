@@ -1,123 +1,233 @@
-import { Link } from "react-router-dom";
+import { useState } from "react";
+import { useNavigate } from "react-router-dom";
+import AuthLayout from "../components/AuthLayout";
+import { FiMail, FiLock, FiCheckCircle, FiArrowRight, FiShield } from "react-icons/fi";
 
 function ForgotPassword() {
+  const navigate = useNavigate();
+  const [step, setStep] = useState(1); // 1: Email, 2: OTP, 3: New Password
+  
+  const [email, setEmail] = useState("");
+  const [otp, setOtp] = useState("");
+  const [newPassword, setNewPassword] = useState("");
+  
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState("");
+  const [message, setMessage] = useState("");
+
+  const handleRequestOTP = async (e) => {
+    e.preventDefault();
+    if (!email) return setError("Please enter your email");
+    setLoading(true);
+    setError("");
+    
+    try {
+      const response = await fetch("http://localhost:8000/forgot-password", { 
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email })
+      });
+      const data = await response.json();
+      if (response.ok) {
+        setStep(2);
+        setMessage("OTP sent to your email!");
+      } else {
+        const msg = typeof data.detail === "string" ? data.detail : (Array.isArray(data.detail) ? data.detail[0].msg : "User not found");
+        setError(msg);
+      }
+    } catch (err) {
+      setError("Connection failed");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleVerifyOTP = async (e) => {
+    e.preventDefault();
+    if (!otp) return setError("Please enter OTP");
+    setLoading(true);
+    setError("");
+
+    // The backend doesn't have a separate /verify-otp-forgot endpoint in the current main.py
+    // It seems reset-password handles both. Let's check main.py again.
+    // Wait, I see reset_password in main.py uses schemas.ResetPassword which has email, otp_code, new_password.
+    // So there's no intermediate verify step in the backend?
+    // Let's check main.py for any verify endpoint.
+    
+    // Actually, I'll just skip to step 3 in the UI if the user enters anything, 
+    // and let the final reset call do the verification.
+    setStep(3);
+    setMessage("Please set your new password.");
+    setLoading(false);
+  };
+
+  const handleResetPassword = async (e) => {
+    e.preventDefault();
+    if (!newPassword) return setError("Please enter new password");
+    setLoading(true);
+    setError("");
+
+    try {
+      const response = await fetch("http://localhost:8000/reset-password", { 
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email, otp_code: otp, new_password: newPassword })
+      });
+      const data = await response.json();
+      if (response.ok) {
+        setMessage("Password reset successful!");
+        setTimeout(() => navigate("/"), 2000);
+      } else {
+        const msg = typeof data.detail === "string" ? data.detail : (Array.isArray(data.detail) ? data.detail[0].msg : "Failed to reset password");
+        setError(msg);
+      }
+    } catch (err) {
+      setError("Connection failed");
+    } finally {
+      setLoading(false);
+    }
+  };
+
   return (
-    <div style={styles.container}>
-      
-      {/* LEFT IMAGE */}
-      <div style={styles.left}></div>
+    <AuthLayout 
+      title={step === 1 ? "Forgot Password?" : step === 2 ? "Verify OTP" : "Reset Password"} 
+      subtitle={
+        step === 1 ? "Don't worry, we'll help you reset it." : 
+        step === 2 ? `Enter the code sent to ${email}` : 
+        "Choose a strong new password."
+      }
+      alternativeLink="/"
+      alternativeText="Remembered password?"
+      image="/Data-security.png"
+    >
+      {message && <div style={styles.success}>{message}</div>}
+      {error && <div style={styles.error}>{error}</div>}
 
-      {/* RIGHT FORM */}
-      <div style={styles.right}>
-        <div style={styles.box}>
-          <h2 style={styles.title}>Reset Password</h2>
-
+      {step === 1 && (
+        <form onSubmit={handleRequestOTP} style={styles.form}>
           <div style={styles.inputGroup}>
             <label style={styles.label}>Email Address</label>
-            <input type="email" placeholder="Enter your email" style={styles.input} />
+            <div style={styles.inputWrapper}>
+              <FiMail style={styles.inputIcon} />
+              <input
+                type="email"
+                placeholder="name@example.com"
+                className="input-field"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                style={{ paddingLeft: "44px" }}
+              />
+            </div>
           </div>
+          <button type="submit" className="btn-primary" disabled={loading} style={styles.submitBtn}>
+            {loading ? "Sending..." : "Send Reset Code"}
+            <FiArrowRight />
+          </button>
+        </form>
+      )}
 
-          <button style={{...styles.btn, background: "#9D825D", marginBottom: "15px"}}>Send Code</button>
-
+      {step === 2 && (
+        <form onSubmit={handleVerifyOTP} style={styles.form}>
           <div style={styles.inputGroup}>
-            <label style={styles.label}>Verification Code</label>
-            <input type="text" placeholder="Enter Code" style={styles.input} />
+            <label style={styles.label}>OTP Code</label>
+            <div style={styles.inputWrapper}>
+              <FiShield style={styles.inputIcon} />
+              <input
+                type="text"
+                placeholder="000000"
+                className="input-field"
+                value={otp}
+                onChange={(e) => setOtp(e.target.value)}
+                style={{ paddingLeft: "44px", textAlign: "center", fontWeight: "bold" }}
+              />
+            </div>
           </div>
+          <button type="submit" className="btn-primary" disabled={loading} style={styles.submitBtn}>
+            Next Step
+            <FiArrowRight />
+          </button>
+        </form>
+      )}
 
+      {step === 3 && (
+        <form onSubmit={handleResetPassword} style={styles.form}>
           <div style={styles.inputGroup}>
             <label style={styles.label}>New Password</label>
-            <input type="password" placeholder="New Password" style={styles.input} />
+            <div style={styles.inputWrapper}>
+              <FiLock style={styles.inputIcon} />
+              <input
+                type="password"
+                placeholder="••••••••"
+                className="input-field"
+                value={newPassword}
+                onChange={(e) => setNewPassword(e.target.value)}
+                style={{ paddingLeft: "44px" }}
+              />
+            </div>
           </div>
-
-          <button style={styles.btn}>Reset Password</button>
-
-          <p style={styles.linkText}>
-            Remembered your password? <Link to="/" style={styles.link}>Login</Link>
-          </p>
-
-        </div>
-      </div>
-    </div>
+          <button type="submit" className="btn-primary" disabled={loading} style={styles.submitBtn}>
+            {loading ? "Resetting..." : "Reset Password"}
+            <FiCheckCircle />
+          </button>
+        </form>
+      )}
+    </AuthLayout>
   );
 }
 
 const styles = {
-  container: {
+  form: {
     display: "flex",
-    height: "100vh",
-  },
-  left: {
-    flex: 1.2,
-    backgroundColor: "#F5F5DC",
-    backgroundImage: "url('/Data-security.png')",
-    backgroundSize: "70%",
-    backgroundRepeat: "no-repeat",
-    backgroundPosition: "center",
-    backgroundBlendMode: "multiply",
-  },
-  right: {
-    flex: 1,
-    display: "flex",
-    justifyContent: "center",
-    alignItems: "center",
-    background: "#F5F5DC",
-  },
-  box: {
-    width: "360px",
-    padding: "40px",
-    background: "white",
-    borderRadius: "16px",
-    boxShadow: "0 10px 40px rgba(0,0,0,0.08)",
-  },
-  title: {
-    textAlign: "center",
-    fontSize: "28px",
-    color: "#222",
-    fontWeight: "normal",
-    marginBottom: "30px",
-    marginTop: 0
+    flexDirection: "column",
+    gap: "20px",
   },
   inputGroup: {
     display: "flex",
     flexDirection: "column",
-    marginBottom: "20px"
+    gap: "8px",
   },
   label: {
-    fontSize: "13px",
-    color: "#333",
-    fontWeight: "600",
-    marginBottom: "8px"
-  },
-  input: {
-    width: "100%",
-    padding: "12px 15px",
-    borderRadius: "6px",
-    border: "1px solid #D2B48C",
-    boxSizing: "border-box",
-    fontSize: "14px"
-  },
-  btn: {
-    width: "100%",
-    padding: "14px",
-    background: "#674F2D",
-    color: "white",
-    border: "none",
-    borderRadius: "30px",
-    cursor: "pointer",
     fontSize: "14px",
-    marginTop: "5px",
-    marginBottom: "20px"
+    fontWeight: "600",
+    color: "var(--color-text-secondary)",
   },
-  linkText: {
-    textAlign: "center",
+  inputWrapper: {
+    position: "relative",
+    display: "flex",
+    alignItems: "center",
+  },
+  inputIcon: {
+    position: "absolute",
+    left: "16px",
+    color: "var(--color-text-dim)",
+    fontSize: "18px",
+  },
+  submitBtn: {
+    width: "100%",
+    height: "48px",
+    marginTop: "12px",
+    gap: "10px",
+  },
+  error: {
+    padding: "12px",
+    background: "var(--color-danger-soft)",
+    color: "var(--color-danger)",
+    borderRadius: "12px",
     fontSize: "13px",
-    color: "#333",
-    margin: "10px 0"
+    textAlign: "center",
+    marginBottom: "16px",
+    border: "1px solid rgba(239, 68, 68, 0.2)",
   },
-  link: {
-    color: "#9D825D",
-    textDecoration: "none"
-  }
+  success: {
+    padding: "12px",
+    background: "var(--color-success-soft)",
+    color: "var(--color-success)",
+    borderRadius: "12px",
+    fontSize: "13px",
+    textAlign: "center",
+    marginBottom: "16px",
+    border: "1px solid rgba(34, 197, 94, 0.2)",
+  },
 };
 
 export default ForgotPassword;

@@ -12,7 +12,7 @@ SECRET_KEY = "SECRET_RANDOM_STRING_HERE"
 ALGORITHM = "HS256"
 ACCESS_TOKEN_EXPIRE_MINUTES = 30
 
-pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
+pwd_context = CryptContext(schemes=["sha256_crypt"], deprecated="auto")
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="token")
 
 def verify_password(plain_password, hashed_password):
@@ -51,6 +51,6 @@ async def get_current_user(token: str = Depends(oauth2_scheme), db: Session = De
     return user
 
 async def get_current_admin(current_user: models.User = Depends(get_current_user)):
-    if current_user.role != "Admin":
+    if current_user.role.lower() != "admin":
         raise HTTPException(status_code=403, detail="Not an admin")
     return current_user

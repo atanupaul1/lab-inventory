@@ -2,6 +2,10 @@ from pydantic import BaseModel, EmailStr
 from typing import List, Optional
 from datetime import datetime
 
+class UserLogin(BaseModel):
+    email: EmailStr
+    password: str
+
 class UserBase(BaseModel):
     email: EmailStr
     full_name: str
@@ -12,12 +16,30 @@ class UserCreate(UserBase):
 
 class UserResponse(UserBase):
     id: int
+    is_verified: bool
     class Config:
         from_attributes = True
 
+class VerifyOTP(BaseModel):
+    email: EmailStr
+    otp_code: str
+
+class ResendOTP(BaseModel):
+    email: EmailStr
+
+class ForgotPassword(BaseModel):
+    email: EmailStr
+
+class ResetPassword(BaseModel):
+    email: EmailStr
+    otp_code: str
+    new_password: str
+
 class Token(BaseModel):
+
     access_token: str
     token_type: str
+    role: str
 
 class TokenData(BaseModel):
     email: Optional[str] = None
@@ -29,6 +51,9 @@ class ItemBase(BaseModel):
     description: Optional[str] = None
     category: Optional[str] = None
     image_url: Optional[str] = None
+    location: Optional[str] = None
+    asset_id: Optional[str] = None
+    purchase_date: Optional[str] = None
 
 class ItemCreate(ItemBase):
     pass
@@ -45,7 +70,7 @@ class RequestBase(BaseModel):
     return_date: Optional[str] = None
 
 class RequestCreate(RequestBase):
-    pass
+    location: Optional[str] = None
 
 class RequestUpdate(BaseModel):
     status: str
@@ -60,7 +85,39 @@ class RequestResponse(BaseModel):
     return_date: Optional[str] = None
     status: str
     admin_message: Optional[str] = None
+    location: Optional[str] = None
     timestamp: datetime
+    user: Optional[UserResponse] = None
+    item: Optional[ItemResponse] = None
     
+    class Config:
+        from_attributes = True
+
+class ProjectBase(BaseModel):
+    name: str
+    start_date: str
+    end_date: str
+    status: Optional[str] = "Active"
+
+class ProjectCreate(ProjectBase):
+    pass
+
+class ProjectResponse(ProjectBase):
+    id: int
+    created_at: datetime
+    class Config:
+        from_attributes = True
+
+class IssueBase(BaseModel):
+    text: str
+
+class IssueCreate(IssueBase):
+    pass
+
+class IssueResponse(IssueBase):
+    id: int
+    user_id: int
+    status: str
+    created_at: datetime
     class Config:
         from_attributes = True
