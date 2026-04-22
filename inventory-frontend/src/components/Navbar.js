@@ -95,7 +95,15 @@ function Navbar() {
                     ) : (
                       <>
                         {pendingRequests.map(r => (
-                          <div key={r.id} style={styles.notiItem}>
+                          <div 
+                            key={r.id} 
+                            className="noti-item"
+                            style={styles.notiItem} 
+                            onClick={() => {
+                              navigate("/manage-requests");
+                              setOpen(false);
+                            }}
+                          >
                             <div style={styles.notiIcon}><FiShoppingCart size={14} /></div>
                             <div>
                                <p style={styles.notiTitle}>New Request: {r.item?.name || "Hardware"}</p>
@@ -104,7 +112,15 @@ function Navbar() {
                           </div>
                         ))}
                         {pendingIssues.map(i => (
-                          <div key={i.id} style={styles.notiItem}>
+                          <div 
+                            key={i.id} 
+                            className="noti-item"
+                            style={styles.notiItem}
+                            onClick={() => {
+                              navigate("/reports");
+                              setOpen(false);
+                            }}
+                          >
                             <div style={{...styles.notiIcon, background: "var(--color-danger-soft)", color: "var(--color-danger)"}}>
                                <FiAlertTriangle size={14} />
                             </div>
@@ -132,6 +148,9 @@ function Navbar() {
         .search-box:focus-within {
           border-color: var(--color-accent) !important;
           box-shadow: 0 0 0 2px var(--color-accent-soft);
+        }
+        .noti-item:hover {
+          background: var(--color-subtle-bg) !important;
         }
         @media (max-width: 768px) {
           .menu-btn-container { display: block; }
@@ -257,6 +276,10 @@ const styles = {
     display: "flex",
     gap: "12px",
     alignItems: "flex-start",
+    cursor: "pointer",
+    padding: "8px",
+    borderRadius: "8px",
+    transition: "background 0.2s",
   },
   notiIcon: {
     width: "28px",

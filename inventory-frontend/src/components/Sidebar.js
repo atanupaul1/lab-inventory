@@ -58,6 +58,7 @@ function Sidebar() {
             <>
               <div style={styles.sectionTitle}>{!collapsed && "Management"}</div>
               <SidebarItem to="/inventory" icon={<FiBox />} label="Inventory" active={isActive("/inventory")} collapsed={collapsed} onClick={() => setMobileOpen(false)} />
+              <SidebarItem to="/manage-requests" icon={<FiShoppingCart />} label="Requests" active={isActive("/manage-requests")} collapsed={collapsed} onClick={() => setMobileOpen(false)} />
               <SidebarItem to="/projects" icon={<FiBarChart2 />} label="Projects" active={isActive("/projects")} collapsed={collapsed} onClick={() => setMobileOpen(false)} />
               <SidebarItem to="/reports" icon={<FiFileText />} label="Reports" active={isActive("/reports")} collapsed={collapsed} onClick={() => setMobileOpen(false)} />
               <SidebarItem to="/settings" icon={<FiSettings />} label="Users" active={isActive("/settings")} collapsed={collapsed} onClick={() => setMobileOpen(false)} />
@@ -68,6 +69,7 @@ function Sidebar() {
             <>
                <div style={styles.sectionTitle}>{!collapsed && "Laboratory"}</div>
                <SidebarItem to="/inventory" icon={<FiBox />} label="Inventory" active={isActive("/inventory")} collapsed={collapsed} onClick={() => setMobileOpen(false)} />
+               <SidebarItem to="/projects" icon={<FiBarChart2 />} label="Projects" active={isActive("/projects")} collapsed={collapsed} onClick={() => setMobileOpen(false)} />
                <SidebarItem to="/request" icon={<FiShoppingCart />} label="Request" active={isActive("/request")} collapsed={collapsed} onClick={() => setMobileOpen(false)} />
               <SidebarItem to="/history" icon={<FiClock />} label="History" active={isActive("/history")} collapsed={collapsed} onClick={() => setMobileOpen(false)} />
               <SidebarItem to="/report-issue" icon={<FiAlertTriangle />} label="Report Issue" active={isActive("/report-issue")} collapsed={collapsed} onClick={() => setMobileOpen(false)} />
