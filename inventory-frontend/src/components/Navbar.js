@@ -100,7 +100,11 @@ function Navbar() {
                             className="noti-item"
                             style={styles.notiItem} 
                             onClick={() => {
-                              navigate("/manage-requests");
+                              if (user?.role?.toLowerCase() === "admin") {
+                                navigate("/manage-requests");
+                              } else {
+                                navigate("/history");
+                              }
                               setOpen(false);
                             }}
                           >
@@ -117,7 +121,11 @@ function Navbar() {
                             className="noti-item"
                             style={styles.notiItem}
                             onClick={() => {
-                              navigate("/reports");
+                              if (user?.role?.toLowerCase() === "admin") {
+                                navigate("/reports");
+                              } else {
+                                navigate("/history");
+                              }
                               setOpen(false);
                             }}
                           >
